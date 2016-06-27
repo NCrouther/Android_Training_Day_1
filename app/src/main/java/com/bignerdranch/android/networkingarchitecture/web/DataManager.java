@@ -2,6 +2,7 @@ package com.bignerdranch.android.networkingarchitecture.web;
 
 import android.content.Context;
 import android.net.Uri;
+import android.support.annotation.VisibleForTesting;
 import android.util.Log;
 
 import com.bignerdranch.android.networkingarchitecture.exception.UnauthorizedException;
@@ -71,6 +72,14 @@ public class DataManager {
                     .build();
             sDataManager = new DataManager(context, basicRestAdapter, authenticatedRestAdapter);
         }
+        return sDataManager;
+    }
+
+    @VisibleForTesting
+    public static DataManager get(Context context, RestAdapter basicRestAdapter,
+                                  RestAdapter authenticatedRestAdapter) {
+        sDataManager = new DataManager(context, basicRestAdapter,
+                authenticatedRestAdapter);
         return sDataManager;
     }
 
