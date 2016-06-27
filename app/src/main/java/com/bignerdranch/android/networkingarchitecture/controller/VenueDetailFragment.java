@@ -20,6 +20,7 @@ import java.util.Locale;
 
 public class VenueDetailFragment extends Fragment implements VenueCheckInListener {
     private static final String ARG_VENUE_ID = "VenueDetailFragment.VenueId";
+    private static final String EXPIRED_DIALOG = "expired_dialog";
 
     private DataManager mDataManager;
     private String mVenueId;
@@ -116,5 +117,12 @@ public class VenueDetailFragment extends Fragment implements VenueCheckInListene
         Toast.makeText(getActivity(), R.string.successful_check_in_message,
                 Toast.LENGTH_SHORT)
                 .show();
+    }
+
+    @Override
+    public void onTokenExpired() {
+        mCheckInButton.setVisibility(View.GONE);
+        ExpiredTokenDialogFragment dialogFragment = new ExpiredTokenDialogFragment();
+        dialogFragment.show(getFragmentManager(), EXPIRED_DIALOG);
     }
 }

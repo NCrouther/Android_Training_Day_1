@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
+import com.bignerdranch.android.networkingarchitecture.exception.UnauthorizedException;
 import com.bignerdranch.android.networkingarchitecture.listener.VenueCheckInListener;
 import com.bignerdranch.android.networkingarchitecture.listener.VenueSearchListener;
 import com.bignerdranch.android.networkingarchitecture.model.TokenStore;
@@ -21,6 +22,7 @@ import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 import retrofit.converter.GsonConverter;
+import rx.android.schedulers.AndroidSchedulers;
 
 public class DataManager {
     private static final String TAG = "DataManager";
@@ -65,6 +67,7 @@ public class DataManager {
                     .setConverter(new GsonConverter(gson))
                     .setLogLevel(RestAdapter.LogLevel.FULL)
                     .setRequestInterceptor(sAuthenticatedRequestInterceptor)
+                    .setErrorHandler(new RetrofitErrorHandler())
                     .build();
             sDataManager = new DataManager(context, basicRestAdapter, authenticatedRestAdapter);
         }
@@ -103,17 +106,19 @@ public class DataManager {
     public void checkInToVenue(String venueId) {
         VenueInterface venueInterface =
                 mAuthenticatedRestAdapter.create(VenueInterface.class);
-        venueInterface.venueCheckIn(venueId, new Callback<Object>() {
-            @Override
-            public void success(Object object, Response response) {
-                notifyCheckInListeners();
-            }
+        venueInterface.venueCheckIn(venueId)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        result -> notifyCheckInListeners(),
+                        this::handleCheckInException
+                );
+    }
 
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e(TAG, "Failed to check in to venue", error);
-            }
-        });
+    private void handleCheckInException(Throwable error) {
+        if (error instanceof UnauthorizedException) {
+            sTokenStore.setAccessToken(null);
+            notifyCheckInListenersTokenExpired();
+        }
     }
 
     public List<Venue> getVenueList() {
@@ -163,6 +168,12 @@ public class DataManager {
     private void notifyCheckInListeners() {
         for (VenueCheckInListener listener : mCheckInListenerList) {
             listener.onVenueCheckInFinished();
+        }
+    }
+
+    private void notifyCheckInListenersTokenExpired() {
+        for (VenueCheckInListener listener : mCheckInListenerList) {
+            listener.onTokenExpired();
         }
     }
 

@@ -8,6 +8,7 @@ import retrofit.http.FormUrlEncoded;
 import retrofit.http.GET;
 import retrofit.http.POST;
 import retrofit.http.Query;
+import rx.Observable;
 
 public interface VenueInterface {
     @GET("/venues/search")
@@ -15,5 +16,5 @@ public interface VenueInterface {
 
     @FormUrlEncoded
     @POST("/checkins/add")
-    void venueCheckIn(@Field("venueId") String venueId, Callback<Object> callback);
+    Observable<Object> venueCheckIn(@Field("venueId") String venueId);
 }
