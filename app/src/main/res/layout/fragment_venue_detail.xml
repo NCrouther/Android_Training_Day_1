@@ -1,51 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <TextView
-        android:id="@+id/fragment_venue_detail_venue_name_text_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="20sp"/>
+    <data>
 
-    <TextView
-        android:id="@+id/fragment_venue_detail_venue_address_text_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"/>
+        <variable
+            name="venueDetailViewModel"
+            type="com.bignerdranch.android.networkingarchitecture.viewmodel.VenueDetailViewModel" />
 
-    <TextView
-        android:id="@+id/fragment_venue_detail_venue_number_checkins_text_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"/>
+        <variable
+            name="checkinButtonClickListener"
+            type="android.view.View.OnClickListener" />
+    </data>
 
-    <TextView
-        android:id="@+id/fragment_venue_detail_venue_number_users_text_view"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/fragment_venue_detail_venue_number_tips_text_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{venueDetailViewModel.venueNameText}"
+            android:textSize="20sp" />
 
-    <TextView
-        android:id="@+id/fragment_venue_detail_venue_hours_text_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{venueDetailViewModel.venueAddressText}"
+            android:textSize="16sp" />
 
-    <Button
-        android:id="@+id/fragment_venue_detail_check_in_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone"
-        android:textSize="16sp"
-        android:text="@string/check_in_button"/>
-</LinearLayout>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{venueDetailViewModel.venueNumberCheckinsText}"
+            android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{venueDetailViewModel.venueNumberUsersText}"
+            android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{venueDetailViewModel.venueNumberTipsText}"
+            android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{venueDetailViewModel.hoursText}"
+            android:textSize="16sp"
+            android:visibility="@{venueDetailViewModel.hoursVisibility}" />
+
+        <Button
+            android:id="@+id/fragment_venue_detail_check_in_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:onClick="@{checkinButtonClickListener}"
+            android:text="@string/check_in_button"
+            android:textSize="16sp"
+            android:visibility="@{venueDetailViewModel.checkinVisibility}" />
+    </LinearLayout>
+</layout>
