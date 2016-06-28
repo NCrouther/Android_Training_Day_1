@@ -1,5 +1,6 @@
 package com.bignerdranch.android.networkingarchitecture.controller;
 
+import android.app.ProgressDialog;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -27,6 +28,7 @@ public class VenueDetailFragment extends Fragment implements VenueCheckInListene
     private FragmentVenueDetailBinding mBinding;
     private TokenStore mTokenStore;
     private VenueDetailViewModel mViewModel;
+    private ProgressDialog mProgressDialog;
 
     public static VenueDetailFragment newInstance(String venueId) {
         VenueDetailFragment fragment = new VenueDetailFragment();
@@ -43,6 +45,18 @@ public class VenueDetailFragment extends Fragment implements VenueCheckInListene
         super.onCreate(savedInstanceState);
 
         mTokenStore = TokenStore.get(getContext());
+        mProgressDialog = new ProgressDialog(getContext());
+        mProgressDialog.setIndeterminate(true);
+        mProgressDialog.setMessage(getContext().getString(R.string.checking_in));
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (mProgressDialog.isShowing()) {
+            mProgressDialog.dismiss();
+        }
     }
 
     @Override
@@ -86,12 +100,14 @@ public class VenueDetailFragment extends Fragment implements VenueCheckInListene
     private View.OnClickListener mCheckInClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
+            mProgressDialog.show();
             mDataManager.checkInToVenue(mVenueId);
         }
     };
 
     @Override
     public void onVenueCheckInFinished() {
+        mProgressDialog.dismiss();
         Toast.makeText(getActivity(), R.string.successful_check_in_message,
                 Toast.LENGTH_SHORT)
                 .show();
@@ -99,9 +115,18 @@ public class VenueDetailFragment extends Fragment implements VenueCheckInListene
 
     @Override
     public void onVenueCheckInRetry() {
+        mProgressDialog.dismiss();
         Toast.makeText(getActivity(), R.string.failed_check_in_message,
                 Toast.LENGTH_SHORT)
                 .show();
+    }
+
+    @Override
+    public void onTokenExpired() {
+        mProgressDialog.dismiss();
+        mViewModel.showCheckinButton(false);
+        ExpiredTokenDialogFragment dialogFragment = new ExpiredTokenDialogFragment();
+        dialogFragment.show(getFragmentManager(), EXPIRED_DIALOG);
     }
 
     @Override
@@ -109,10 +134,4 @@ public class VenueDetailFragment extends Fragment implements VenueCheckInListene
         mViewModel.updateHours(hoursResponse.getOpenHours());
     }
 
-    @Override
-    public void onTokenExpired() {
-        mViewModel.showCheckinButton(false);
-        ExpiredTokenDialogFragment dialogFragment = new ExpiredTokenDialogFragment();
-        dialogFragment.show(getFragmentManager(), EXPIRED_DIALOG);
-    }
 }
