@@ -133,6 +133,8 @@ public class DataManager {
         if (error instanceof UnauthorizedException) {
             sTokenStore.setAccessToken(null);
             notifyCheckInListenersTokenExpired();
+        } else {
+            notifyCheckInListenersRetry();
         }
     }
 
@@ -218,6 +220,12 @@ public class DataManager {
     private void notifyCheckInListenersTokenExpired() {
         for (VenueCheckInListener listener : mCheckInListenerList) {
             listener.onTokenExpired();
+        }
+    }
+
+    private void notifyCheckInListenersRetry() {
+        for (VenueCheckInListener listener : mCheckInListenerList) {
+            listener.onVenueCheckInRetry();
         }
     }
 

@@ -98,6 +98,13 @@ public class VenueDetailFragment extends Fragment implements VenueCheckInListene
     }
 
     @Override
+    public void onVenueCheckInRetry() {
+        Toast.makeText(getActivity(), R.string.failed_check_in_message,
+                Toast.LENGTH_SHORT)
+                .show();
+    }
+
+    @Override
     public void onGetHoursComplete(HoursResponse hoursResponse) {
         mViewModel.updateHours(hoursResponse.getOpenHours());
     }
