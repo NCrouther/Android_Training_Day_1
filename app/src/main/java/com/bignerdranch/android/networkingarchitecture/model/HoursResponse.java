@@ -4,16 +4,16 @@ import com.google.gson.annotations.SerializedName;
 
 public class HoursResponse {
     @SerializedName("hours")
-    private TimeFrame mOpenHours;
+    private TimeFrames mOpenHours;
 
     @SerializedName("popular")
-    private TimeFrame mPopularHours;
+    private TimeFrames mPopularHours;
 
-    public TimeFrame getOpenHours() {
+    public TimeFrames getOpenHours() {
         return mOpenHours;
     }
 
-    public TimeFrame getPopularHours() {
+    public TimeFrames getPopularHours() {
         return mPopularHours;
     }
 }

@@ -7,7 +7,9 @@ import android.util.Log;
 
 import com.bignerdranch.android.networkingarchitecture.exception.UnauthorizedException;
 import com.bignerdranch.android.networkingarchitecture.listener.VenueCheckInListener;
+import com.bignerdranch.android.networkingarchitecture.listener.VenueGetHoursListener;
 import com.bignerdranch.android.networkingarchitecture.listener.VenueSearchListener;
+import com.bignerdranch.android.networkingarchitecture.model.HoursResponse;
 import com.bignerdranch.android.networkingarchitecture.model.TokenStore;
 import com.bignerdranch.android.networkingarchitecture.model.Venue;
 import com.bignerdranch.android.networkingarchitecture.model.VenueSearchResponse;
@@ -44,6 +46,7 @@ public class DataManager {
     private List<Venue> mVenueList;
     private List<VenueSearchListener> mSearchListenerList;
     private List<VenueCheckInListener> mCheckInListenerList;
+    private List<VenueGetHoursListener> mGetHoursListenerList;
 
     private static DataManager sDataManager;
     private Context mContext;
@@ -56,6 +59,8 @@ public class DataManager {
             Gson gson = new GsonBuilder()
                     .registerTypeAdapter(VenueSearchResponse.class,
                             new VenueListDeserializer())
+                    .registerTypeAdapter(HoursResponse.class,
+                            new HoursDeserializer())
                     .create();
             RestAdapter basicRestAdapter = new RestAdapter.Builder()
                     .setEndpoint(FOURSQUARE_ENDPOINT)
@@ -93,6 +98,7 @@ public class DataManager {
         mAuthenticatedRestAdapter = authenticatedRestAdapter;
         mSearchListenerList = new ArrayList<>();
         mCheckInListenerList = new ArrayList<>();
+        mGetHoursListenerList = new ArrayList<>();
     }
 
     public void fetchVenueSearch() {
@@ -128,6 +134,21 @@ public class DataManager {
             sTokenStore.setAccessToken(null);
             notifyCheckInListenersTokenExpired();
         }
+    }
+
+    public void fetchVenueHours(String venueId) {
+        VenueInterface venueInterface = mBasicRestAdapter.create(VenueInterface.class);
+        venueInterface.venueHours(venueId, new Callback<HoursResponse>() {
+            @Override
+            public void success(HoursResponse hoursResponse, Response response) {
+                notifyGetHoursListeners(hoursResponse);
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e(TAG, "Failed to get venue hours", error);
+            }
+        });
     }
 
     public List<Venue> getVenueList() {
@@ -177,6 +198,20 @@ public class DataManager {
     private void notifyCheckInListeners() {
         for (VenueCheckInListener listener : mCheckInListenerList) {
             listener.onVenueCheckInFinished();
+        }
+    }
+
+    public void addGetHoursListener(VenueGetHoursListener listener) {
+        mGetHoursListenerList.add(listener);
+    }
+
+    public void removeGetHoursListener(VenueGetHoursListener listener) {
+        mGetHoursListenerList.remove(listener);
+    }
+
+    private void notifyGetHoursListeners(HoursResponse hoursResponse) {
+        for (VenueGetHoursListener listener : mGetHoursListenerList) {
+            listener.onGetHoursComplete(hoursResponse);
         }
     }
 

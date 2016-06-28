@@ -34,6 +34,12 @@
         android:layout_height="wrap_content"
         android:textSize="16sp"/>
 
+    <TextView
+        android:id="@+id/fragment_venue_detail_venue_hours_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"/>
+
     <Button
         android:id="@+id/fragment_venue_detail_check_in_button"
         android:layout_width="match_parent"
