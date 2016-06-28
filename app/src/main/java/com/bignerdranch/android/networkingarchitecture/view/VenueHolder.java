@@ -7,9 +7,8 @@ import android.view.View;
 
 import com.bignerdranch.android.networkingarchitecture.controller.VenueDetailActivity;
 import com.bignerdranch.android.networkingarchitecture.model.Venue;
-import com.squareup.picasso.Picasso;
 
-public class VenueHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+public class VenueHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
     private static final int ICON_SIZE = 64;
 
     private VenueView mVenueView;

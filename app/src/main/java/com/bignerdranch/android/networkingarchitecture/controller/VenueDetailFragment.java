@@ -1,7 +1,6 @@
 package com.bignerdranch.android.networkingarchitecture.controller;
 
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -144,7 +143,6 @@ public class VenueDetailFragment extends Fragment implements VenueCheckInListene
 
     @Nullable
     private String parseHours(TimeFrames hours) {
-        String text;
         if (hours != null) {
             List<TimeFrame> timeFrames = hours.getTimeFrames();
             if (timeFrames != null && !timeFrames.isEmpty()) {
