@@ -12,6 +12,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import com.bignerdranch.android.networkingarchitecture.R;
 import com.bignerdranch.android.networkingarchitecture.listener.VenueSearchListener;
@@ -26,6 +27,7 @@ import java.util.List;
 public class VenueListFragment extends Fragment implements VenueSearchListener {
     private static final int AUTHENTICATION_ACTIVITY_REQUEST = 0;
 
+    private ProgressBar mProgress;
     private RecyclerView mRecyclerView;
     private VenueListAdapter mVenueListAdapter;
     private List<Venue> mVenueList;
@@ -45,6 +47,7 @@ public class VenueListFragment extends Fragment implements VenueSearchListener {
             LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_venue_list, container, false);
+        mProgress = (ProgressBar) view.findViewById(R.id.venueListProgressBar);
         mRecyclerView = (RecyclerView) view.findViewById(R.id.venueListRecyclerView);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(layoutManager);
@@ -107,5 +110,9 @@ public class VenueListFragment extends Fragment implements VenueSearchListener {
     public void onVenueSearchFinished() {
         mVenueList = mDataManager.getVenueList();
         mVenueListAdapter.setVenueList(mVenueList);
+        mVenueListAdapter.notifyDataSetChanged();
+
+        mProgress.setVisibility(View.GONE);
+        mRecyclerView.setVisibility(View.VISIBLE);
     }
 }
