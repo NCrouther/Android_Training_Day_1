@@ -23,8 +23,7 @@ public class VenueHolder extends RecyclerView.ViewHolder implements View.OnClick
 
     public void bindVenue(Venue venue) {
         mVenue = venue;
-        mVenueView.setVenueTitle(mVenue.getName());
-        mVenueView.setVenueAddress(mVenue.getFormattedAddress());
+        mVenueView.setVenue(mVenue.getName(), mVenue.getFormattedAddress());
 
         String iconPath = venue.getPrimaryCategoryIconPath(ICON_SIZE);
         if (iconPath != null) {
