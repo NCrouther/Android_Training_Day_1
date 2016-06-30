@@ -80,6 +80,8 @@ public class VenueView extends View implements Target {
         mTitle = title;
         mAddress = address;
         invalidate();
+
+        setContentDescription(title);
     }
 
     @Override
