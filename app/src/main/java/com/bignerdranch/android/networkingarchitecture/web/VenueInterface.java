@@ -3,23 +3,23 @@ package com.bignerdranch.android.networkingarchitecture.web;
 import com.bignerdranch.android.networkingarchitecture.model.HoursResponse;
 import com.bignerdranch.android.networkingarchitecture.model.VenueSearchResponse;
 
-import retrofit.Callback;
-import retrofit.http.Field;
-import retrofit.http.FormUrlEncoded;
-import retrofit.http.GET;
-import retrofit.http.POST;
-import retrofit.http.Path;
-import retrofit.http.Query;
+import retrofit2.Call;
+import retrofit2.http.Field;
+import retrofit2.http.FormUrlEncoded;
+import retrofit2.http.GET;
+import retrofit2.http.POST;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
 import rx.Observable;
 
 public interface VenueInterface {
-    @GET("/venues/search")
-    void venueSearch(@Query("ll") String latLngString, Callback<VenueSearchResponse> callback);
+    @GET("venues/search")
+    Call<VenueSearchResponse> venueSearch(@Query("ll") String latLngString);
 
-    @GET("/venues/{venueId}/hours")
-    void venueHours(@Path("venueId") String venueId, Callback<HoursResponse> callback);
+    @GET("venues/{venueId}/hours")
+    Call<HoursResponse> venueHours(@Path("venueId") String venueId);
 
     @FormUrlEncoded
-    @POST("/checkins/add")
+    @POST("checkins/add")
     Observable<Object> venueCheckIn(@Field("venueId") String venueId);
 }

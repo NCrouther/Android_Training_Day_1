@@ -2,20 +2,19 @@ package com.bignerdranch.android.networkingarchitecture.web;
 
 import com.bignerdranch.android.networkingarchitecture.exception.UnauthorizedException;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 
-import retrofit.ErrorHandler;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import okhttp3.Interceptor;
+import okhttp3.Response;
 
-public class RetrofitErrorHandler implements ErrorHandler {
+public class RetrofitErrorHandler implements Interceptor {
     @Override
-    public Throwable handleError(RetrofitError cause) {
-        Response response = cause.getResponse();
-        if (response != null &&
-                response.getStatus() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-            return new UnauthorizedException(cause);
+    public Response intercept(Chain chain) throws IOException {
+        Response response = chain.proceed(chain.request());
+        if (response.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            throw new UnauthorizedException();
         }
-        return cause;
+        return response;
     }
 }

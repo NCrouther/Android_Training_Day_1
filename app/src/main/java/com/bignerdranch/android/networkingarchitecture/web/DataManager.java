@@ -18,19 +18,24 @@ import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-import retrofit.Callback;
-import retrofit.RequestInterceptor;
-import retrofit.RestAdapter;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
-import retrofit.converter.GsonConverter;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class DataManager {
     private static final String TAG = "DataManager";
     private static final String FOURSQUARE_ENDPOINT
-            = "https://api.foursquare.com/v2";
+            = "https://api.foursquare.com/v2/";
     private static final String OAUTH_ENDPOINT
             = "https://foursquare.com/oauth2/authenticate";
     public static final String OAUTH_REDIRECT_URI
@@ -51,8 +56,8 @@ public class DataManager {
     private static DataManager sDataManager;
     private Context mContext;
     private static TokenStore sTokenStore;
-    private RestAdapter mBasicRestAdapter;
-    private RestAdapter mAuthenticatedRestAdapter;
+    private Retrofit mBasicRestAdapter;
+    private Retrofit mAuthenticatedRestAdapter;
 
     public static DataManager get(Context context) {
         if (sDataManager == null) {
@@ -62,18 +67,29 @@ public class DataManager {
                     .registerTypeAdapter(HoursResponse.class,
                             new HoursDeserializer())
                     .create();
-            RestAdapter basicRestAdapter = new RestAdapter.Builder()
-                    .setEndpoint(FOURSQUARE_ENDPOINT)
-                    .setConverter(new GsonConverter(gson))
-                    .setLogLevel(RestAdapter.LogLevel.FULL)
-                    .setRequestInterceptor(sRequestInterceptor)
+
+            HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+            interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .addInterceptor(interceptor)
+                    .addInterceptor(sRequestInterceptor).build();
+            Retrofit basicRestAdapter = new Retrofit.Builder()
+                    .baseUrl(FOURSQUARE_ENDPOINT)
+                    .addConverterFactory(GsonConverterFactory.create(gson))
+                    .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                    .client(client)
                     .build();
-            RestAdapter authenticatedRestAdapter = new RestAdapter.Builder()
-                    .setEndpoint(FOURSQUARE_ENDPOINT)
-                    .setConverter(new GsonConverter(gson))
-                    .setLogLevel(RestAdapter.LogLevel.FULL)
-                    .setRequestInterceptor(sAuthenticatedRequestInterceptor)
-                    .setErrorHandler(new RetrofitErrorHandler())
+
+            OkHttpClient authenticatedClient = new OkHttpClient.Builder()
+                    .addInterceptor(interceptor)
+                    .addInterceptor(sAuthenticatedRequestInterceptor)
+                    .addInterceptor(new RetrofitErrorHandler()).build();
+            Retrofit authenticatedRestAdapter = new Retrofit.Builder()
+                    .baseUrl(FOURSQUARE_ENDPOINT)
+                    .addConverterFactory(GsonConverterFactory.create(gson))
+                    .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                    .client(authenticatedClient)
                     .build();
             sDataManager = new DataManager(context, basicRestAdapter, authenticatedRestAdapter);
         }
@@ -81,8 +97,8 @@ public class DataManager {
     }
 
     @VisibleForTesting
-    public static DataManager get(Context context, RestAdapter basicRestAdapter,
-                                  RestAdapter authenticatedRestAdapter) {
+    public static DataManager get(Context context, Retrofit basicRestAdapter,
+                                  Retrofit authenticatedRestAdapter) {
         sDataManager = new DataManager(context, basicRestAdapter,
                 authenticatedRestAdapter);
         return sDataManager;
@@ -90,8 +106,8 @@ public class DataManager {
 
     private DataManager(
             Context context,
-            RestAdapter basicRestAdapter,
-            RestAdapter authenticatedRestAdapter) {
+            Retrofit basicRestAdapter,
+            Retrofit authenticatedRestAdapter) {
         mContext = context.getApplicationContext();
         sTokenStore = TokenStore.get(mContext);
         mBasicRestAdapter = basicRestAdapter;
@@ -103,17 +119,23 @@ public class DataManager {
 
     public void fetchVenueSearch() {
         VenueInterface venueInterface = mBasicRestAdapter.create(VenueInterface.class);
-        venueInterface.venueSearch(TEST_LAT_LNG, new Callback<VenueSearchResponse>() {
+        venueInterface.venueSearch(TEST_LAT_LNG).enqueue(new Callback<VenueSearchResponse>() {
             @Override
-            public void success(
-                    VenueSearchResponse venueSearchResponse, Response response) {
-                mVenueList = venueSearchResponse.getVenueList();
-                notifySearchListeners();
+            public void onResponse(
+                    Call<VenueSearchResponse> call,
+                    Response<VenueSearchResponse> response) {
+                if (response.isSuccessful()) {
+                    mVenueList = response.body().getVenueList();
+                    notifySearchListeners();
+                } else {
+                    Log.e(TAG, String.format(Locale.getDefault(),
+                            "Failed to fetch venue search: code %d", response.code()));
+                }
             }
 
             @Override
-            public void failure(RetrofitError error) {
-                Log.e(TAG, "Failed to fetch venue search", error);
+            public void onFailure(Call<VenueSearchResponse> call, Throwable t) {
+                Log.e(TAG, "Failed to fetch venue search", t);
             }
         });
     }
@@ -122,6 +144,7 @@ public class DataManager {
         VenueInterface venueInterface =
                 mAuthenticatedRestAdapter.create(VenueInterface.class);
         venueInterface.venueCheckIn(venueId)
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         result -> notifyCheckInListeners(),
@@ -140,15 +163,20 @@ public class DataManager {
 
     public void fetchVenueHours(String venueId) {
         VenueInterface venueInterface = mBasicRestAdapter.create(VenueInterface.class);
-        venueInterface.venueHours(venueId, new Callback<HoursResponse>() {
+        venueInterface.venueHours(venueId).enqueue(new Callback<HoursResponse>() {
             @Override
-            public void success(HoursResponse hoursResponse, Response response) {
-                notifyGetHoursListeners(hoursResponse);
+            public void onResponse(Call<HoursResponse> call, Response<HoursResponse> response) {
+                if (response.isSuccessful()) {
+                    notifyGetHoursListeners(response.body());
+                } else {
+                    Log.e(TAG, String.format(Locale.getDefault(),
+                            "Failed to get venue hours: code %d", response.code()));
+                }
             }
 
             @Override
-            public void failure(RetrofitError error) {
-                Log.e(TAG, "Failed to get venue hours", error);
+            public void onFailure(Call<HoursResponse> call, Throwable t) {
+                Log.e(TAG, "Failed to get venue hours", t);
             }
         });
     }
@@ -229,23 +257,18 @@ public class DataManager {
         }
     }
 
-    private static RequestInterceptor sRequestInterceptor = new RequestInterceptor() {
-        @Override
-        public void intercept(RequestFacade request) {
-            request.addQueryParam("client_id", CLIENT_ID);
-            request.addQueryParam("client_secret", CLIENT_SECRET);
-            request.addQueryParam("v", FOURSQUARE_VERSION);
-            request.addQueryParam("m", FOURSQUARE_MODE);
-        }
-    };
+    private static Interceptor sRequestInterceptor = chain -> chain.proceed(
+            chain.request().newBuilder().url(
+                    chain.request().url().newBuilder()
+                            .addQueryParameter("client_id", CLIENT_ID)
+                            .addQueryParameter("client_secret", CLIENT_SECRET)
+                            .addQueryParameter("v", FOURSQUARE_VERSION)
+                            .addQueryParameter("m", FOURSQUARE_MODE).build()).build());
 
-    private static RequestInterceptor sAuthenticatedRequestInterceptor =
-            new RequestInterceptor() {
-                @Override
-                public void intercept(RequestFacade request) {
-                    request.addQueryParam("oauth_token", sTokenStore.getAccessToken());
-                    request.addQueryParam("v", FOURSQUARE_VERSION);
-                    request.addQueryParam("m", SWARM_MODE);
-                }
-            };
+    private static Interceptor sAuthenticatedRequestInterceptor = chain -> chain.proceed(
+            chain.request().newBuilder().url(
+                    chain.request().url().newBuilder()
+                            .addQueryParameter("oauth_token", sTokenStore.getAccessToken())
+                            .addQueryParameter("v", FOURSQUARE_VERSION)
+                            .addQueryParameter("m", SWARM_MODE).build()).build());
 }

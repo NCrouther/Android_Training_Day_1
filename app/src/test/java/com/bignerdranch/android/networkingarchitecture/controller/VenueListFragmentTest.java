@@ -23,8 +23,10 @@ import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
-import retrofit.RestAdapter;
-import retrofit.converter.GsonConverter;
+import okhttp3.Dispatcher;
+import okhttp3.OkHttpClient;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -52,10 +54,12 @@ public class VenueListFragmentTest {
                         new VenueListDeserializer())
                 .create();
         SynchronousExecutor executor = new SynchronousExecutor();
-        RestAdapter basicRestAdapter = new RestAdapter.Builder()
-                .setEndpoint(mEndpoint)
-                .setConverter(new GsonConverter(gson))
-                .setExecutors(executor, executor)
+        OkHttpClient client = new OkHttpClient.Builder()
+                .dispatcher(new Dispatcher(new SynchronousExecutor())).build();
+        Retrofit basicRestAdapter = new Retrofit.Builder()
+                .baseUrl(mEndpoint)
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .client(client)
                 .build();
         mDataManager = DataManager.get(
                 RuntimeEnvironment.application, basicRestAdapter, null);
