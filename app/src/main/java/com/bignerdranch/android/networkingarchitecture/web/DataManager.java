@@ -51,6 +51,7 @@ public class DataManager {
     private static final String FOURSQUARE_MODE = "foursquare";
     private static final String SWARM_MODE = "swarm";
     private static final String TEST_LAT_LNG = "33.759,-84.332";
+    private static final String TEST_LOCATION = "San Francisco, CA";
     private static final String LAST_CHECKIN_TIMES = "lastCheckinTimes";
     private List<Venue> mVenueList;
     private List<VenueSearchListener> mSearchListenerList;
@@ -121,27 +122,34 @@ public class DataManager {
         mGetHoursListenerList = new ArrayList<>();
     }
 
-    public void fetchVenueSearch() {
-        VenueInterface venueInterface = mBasicRestAdapter.create(VenueInterface.class);
-        venueInterface.venueSearch(TEST_LAT_LNG).enqueue(new Callback<VenueSearchResponse>() {
-            @Override
-            public void onResponse(
-                    Call<VenueSearchResponse> call,
-                    Response<VenueSearchResponse> response) {
-                if (response.isSuccessful()) {
-                    mVenueList = response.body().getVenueList();
-                    notifySearchListeners();
-                } else {
-                    Log.e(TAG, String.format(Locale.getDefault(),
-                            "Failed to fetch venue search: code %d", response.code()));
-                }
+    private Callback<VenueSearchResponse> venueSearchResponseCallback = new Callback<VenueSearchResponse>() {
+        @Override
+        public void onResponse(
+                Call<VenueSearchResponse> call,
+                Response<VenueSearchResponse> response) {
+            if (response.isSuccessful()) {
+                mVenueList = response.body().getVenueList();
+                notifySearchListeners();
+            } else {
+                Log.e(TAG, String.format(Locale.getDefault(),
+                        "Failed to fetch venue search: code %d", response.code()));
             }
+        }
 
-            @Override
-            public void onFailure(Call<VenueSearchResponse> call, Throwable t) {
-                Log.e(TAG, "Failed to fetch venue search", t);
-            }
-        });
+        @Override
+        public void onFailure(Call<VenueSearchResponse> call, Throwable t) {
+            Log.e(TAG, "Failed to fetch venue search", t);
+        }
+    };
+
+    public void fetchVenueSearchLatLong() {
+        VenueInterface venueInterface = mBasicRestAdapter.create(VenueInterface.class);
+        venueInterface.venueSearchByLatLong(TEST_LAT_LNG).enqueue(venueSearchResponseCallback);
+    }
+
+    public void fetchVenueSearchLocation() {
+        VenueInterface venueInterface = mBasicRestAdapter.create(VenueInterface.class);
+        venueInterface.venueSearchByLocation(TEST_LOCATION).enqueue(venueSearchResponseCallback);
     }
 
     public void checkInToVenue(String venueId) {

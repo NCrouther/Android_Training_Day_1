@@ -14,7 +14,10 @@ import rx.Observable;
 
 public interface VenueInterface {
     @GET("venues/search")
-    Call<VenueSearchResponse> venueSearch(@Query("ll") String latLngString);
+    Call<VenueSearchResponse> venueSearchByLatLong(@Query("ll") String latLngString);
+
+    @GET("venues/search")
+    Call<VenueSearchResponse> venueSearchByLocation(@Query("near") String locationString);
 
     @GET("venues/{venueId}/hours")
     Call<HoursResponse> venueHours(@Path("venueId") String venueId);

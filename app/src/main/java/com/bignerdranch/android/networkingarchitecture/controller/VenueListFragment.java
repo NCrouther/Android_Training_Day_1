@@ -22,6 +22,7 @@ import com.bignerdranch.android.networkingarchitecture.view.VenueListAdapter;
 import com.bignerdranch.android.networkingarchitecture.web.DataManager;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class VenueListFragment extends Fragment implements VenueSearchListener {
@@ -62,7 +63,12 @@ public class VenueListFragment extends Fragment implements VenueSearchListener {
 
         mDataManager = DataManager.get(getContext());
         mDataManager.addVenueSearchListener(this);
-        mDataManager.fetchVenueSearch();
+
+        if ((new Date().getTime() >> 4) % 2 == 0) {
+            mDataManager.fetchVenueSearchLatLong();
+        } else {
+            mDataManager.fetchVenueSearchLocation();
+        }
     }
 
     @Override

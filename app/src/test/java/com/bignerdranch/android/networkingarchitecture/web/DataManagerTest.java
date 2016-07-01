@@ -77,8 +77,8 @@ public class DataManagerTest {
 
     @Test
     public void searchListenerTriggeredOnSuccessfulSearch() {
-        mDataManager.fetchVenueSearch();
-        verify(mVenueInterface).venueSearch(anyString()).enqueue(mSearchCaptor.capture());
+        mDataManager.fetchVenueSearchLatLong();
+        verify(mVenueInterface).venueSearchByLatLong(anyString()).enqueue(mSearchCaptor.capture());
         VenueSearchResponse venueSearchResponse = mock(VenueSearchResponse.class);
         Response response = mock(Response.class);
         when(response.body()).thenReturn(venueSearchResponse);
@@ -88,8 +88,8 @@ public class DataManagerTest {
 
     @Test
     public void venueSearchListSavedOnSuccessfulSearch() {
-        mDataManager.fetchVenueSearch();
-        verify(mVenueInterface).venueSearch(anyString()).enqueue(mSearchCaptor.capture());
+        mDataManager.fetchVenueSearchLatLong();
+        verify(mVenueInterface).venueSearchByLatLong(anyString()).enqueue(mSearchCaptor.capture());
         String firstVenueName = "Cool first venue";
         Venue firstVenue = mock(Venue.class);
         when(firstVenue.getName()).thenReturn(firstVenueName);
