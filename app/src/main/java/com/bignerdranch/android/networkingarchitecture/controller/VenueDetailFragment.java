@@ -122,6 +122,14 @@ public class VenueDetailFragment extends Fragment implements VenueCheckInListene
     }
 
     @Override
+    public void onVenueCheckInTooSoon() {
+        mProgressDialog.dismiss();
+        Toast.makeText(getActivity(), R.string.too_soon_checkin_message,
+                Toast.LENGTH_SHORT)
+                .show();
+    }
+
+    @Override
     public void onTokenExpired() {
         mProgressDialog.dismiss();
         mViewModel.showCheckinButton(false);

@@ -9,4 +9,5 @@
     <string name="expired_token_dialog_message">Your access token has expired.
         Please reauthenticate with Foursquare and try again.</string>
     <string name="checking_in">Checking in</string>
+    <string name="too_soon_checkin_message">Can only checkin once per 24 hours</string>
 </resources>

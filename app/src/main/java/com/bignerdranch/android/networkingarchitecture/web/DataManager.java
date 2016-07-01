@@ -1,6 +1,7 @@
 package com.bignerdranch.android.networkingarchitecture.web;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.support.annotation.VisibleForTesting;
 import android.util.Log;
@@ -17,8 +18,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -48,6 +51,7 @@ public class DataManager {
     private static final String FOURSQUARE_MODE = "foursquare";
     private static final String SWARM_MODE = "swarm";
     private static final String TEST_LAT_LNG = "33.759,-84.332";
+    private static final String LAST_CHECKIN_TIMES = "lastCheckinTimes";
     private List<Venue> mVenueList;
     private List<VenueSearchListener> mSearchListenerList;
     private List<VenueCheckInListener> mCheckInListenerList;
@@ -141,15 +145,23 @@ public class DataManager {
     }
 
     public void checkInToVenue(String venueId) {
-        VenueInterface venueInterface =
-                mAuthenticatedRestAdapter.create(VenueInterface.class);
-        venueInterface.venueCheckIn(venueId)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        result -> notifyCheckInListeners(),
-                        this::handleCheckInException
-                );
+        SharedPreferences sp = mContext.getSharedPreferences(LAST_CHECKIN_TIMES, 0);
+        long lastCheckinTicks = sp.getLong(venueId, 0);
+        long currentTimeTicks = new Date().getTime();
+        if (currentTimeTicks > lastCheckinTicks + TimeUnit.DAYS.toMillis(1)) {
+            VenueInterface venueInterface =
+                    mAuthenticatedRestAdapter.create(VenueInterface.class);
+            venueInterface.venueCheckIn(venueId)
+                    .doOnCompleted(() -> sp.edit().putLong(venueId, currentTimeTicks).apply())
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            result -> notifyCheckInListeners(),
+                            this::handleCheckInException
+                    );
+        } else {
+            notifyCheckInListenersTooSoon();
+        }
     }
 
     private void handleCheckInException(Throwable error) {
@@ -254,6 +266,12 @@ public class DataManager {
     private void notifyCheckInListenersRetry() {
         for (VenueCheckInListener listener : mCheckInListenerList) {
             listener.onVenueCheckInRetry();
+        }
+    }
+
+    private void notifyCheckInListenersTooSoon() {
+        for (VenueCheckInListener listener : mCheckInListenerList) {
+            listener.onVenueCheckInTooSoon();
         }
     }
 
